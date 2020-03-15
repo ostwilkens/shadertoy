@@ -54,12 +54,6 @@ float sphere(vec3 p, float r) {
     return (1. - step(r, length(p) * 0.01)) * 0.01;
 }
 
-// float sphere(vec3 pos, float radius)
-// {
-//     float dist = length(pos) + radius;
-//     return lightField(dist);
-// }
-
 float point(vec3 p, float r, float s) {
     return min(1., (1. / length(p)) * r) * s;
 }
@@ -72,9 +66,9 @@ float smoothstep2(float a, float b, float v) {
 
 void worldR(inout vec3 p, float op) {
     float n = iTime / BEAT;
+    pR(p.yx, 1.0 * op);
     pR(p.zx, sin(n * 0.25) * 0.3 * op); // rot
-    // pR(p.zx, sin(n * 0.25) * 0.7 * op); // rot
-    // pR(p.zy, cos(n * 0.25) * 0.5 * op); // rot
+    pR(p.zy, cos(n * 0.25) * 0.2 * op); // rot
 }
 
 vec3 scene(vec3 p)
@@ -82,33 +76,49 @@ vec3 scene(vec3 p)
     float n = iTime / BEAT;
     worldR(p, 1.);
     p.xy *= 1. + length(p.xy) * 0.2; // barrel distort
-    p /= 0.4; // zoom out
+    p /= 0.35; // zoom out
     // p.xy /= 0.3;
+
 
     // n = mod(n, 4.); // loop dur
     // n += 4.; // start offset
-    n += 53.1;
+    // n += 53.1;
     // n *= 0.2;
 
     // point movement calc
     float wn = n / 4. + 0.46;
     float warpnessX = -0.25 + smoothstep(0.45, 0.6, mod(wn, 4.)) * 0.5 - smoothstep(2.45, 2.6, mod(wn, 4.)) * 0.5;
     float warpnessY = -0.25 + smoothstep(1.45, 1.6, mod(wn, 4.)) * 0.5 - smoothstep(3.45, 3.6, mod(wn, 4.)) * 0.5;
+    float orbXPos = step(0., warpnessX);
+    float orbYPos = step(0., warpnessY);
     float stuckness = (abs(warpnessX) + abs(warpnessY));
     stuckness = smoothstep(0.42, 0.5, stuckness) + 0.05;
 
 
     // global modifiers
-    // p *= 1. + sin((n) / 2.) * 0.2; // slow zoom in<->out
+    p *= 1. + sin(n*0.15) * 0.3; // slow zoom in<->out
     // p *= 1. + tan((n * PI * 0.5) / 8.) * 0.02; // warp in<->out
-    // pR(p.xy, p.z * 1. + n * 0.05); // spin
     // pR(p.zx, n * 0.1); // spin
     // pR(p.zx, txnoise(p * 2. + n)); // flare
     // pR(p.xy, (txnoise(p * 4. + n) - 0.5) * 0.15 * stuckness); // flare
     // pR(p.yz, (p.x * 18. + n * 1.) * 0.1); // x axis spiral
+    p *= (0.95 + smoothstep(0., 0.2, mod(n - 0.43, 1.)) * 0.05); // pump
+    float recoil = (0.9 + smoothstep(0., 0.7, mod(n - 0.2, 4.)) * 0.1);
+    p *= recoil; // pump
+    pR(p.xy, n * 0.2 - recoil * 2.); // spin
 
+    // p.xy -= vec2(warpnessX, warpnessY) * 1.; // follow cam
+    
+
+    // p.xy += 2.;
+
+    // p.xy += 0.4;
+    // // repeat orb
+    // p.xy = mod(p.xy, 1.);
+    // p.xy -= 0.5;
 
     vec3 gp = p;
+
     
     // pR(p.zx, sin(n * 0.25) * 0.3); // rot
     // pR(p.zy, cos(n * 0.25) * 0.5); // rot
@@ -118,20 +128,18 @@ vec3 scene(vec3 p)
 
 
     // repeat
-    vec3 cell = floor(p);
-    p.xy += 0.25;
-    // p.z += 0.1;
-    p *= 2.;
-    p = fract(p + 0.5) - 0.5;
-    p /= 2.;
+    vec3 cell = floor(p / 0.5);
+    p.xy = mod(p.xy, 0.5);
+    p.xy -= 0.25;
     float cellId = (1. - abs(cell.y * 3. - cell.x));
     pR(p.xy, -0.5 * cellId * PI);
-    // pR(p.xy, -0.5 * (cell.x - cell.y) * PI);
 
-    float orbXPos = step(0., warpnessX);
-    float orbYPos = step(0., warpnessY);
+
     float orbInCell = abs((1. - abs(orbYPos - cell.y)) * (1. - abs(orbXPos - cell.x)));
-    orbInCell = clamp(orbInCell, 0., 1.);
+    // orbInCell = clamp(orbInCell, 0., 1.);
+    orbInCell *= cell.x == 0. ? 1. : 0. + cell.x == -1. ? 1. : 0.;
+    orbInCell *= cell.y == 0. ? 1. : 0. + cell.y == -1. ? 1. : 0.;
+    // orbInCell = clamp(orbInCell, 0., 1.);
     float orbNotInCell = 1. - orbInCell;
     // pR(p.xy, orbInCell);
     // p.z += orbInCell;
@@ -155,7 +163,7 @@ vec3 scene(vec3 p)
     // pR(p.zx, txnoise(p * 2. + n)); // flare
     // pR(p.xy, txnoise(p * 4. + n) - 0.5); // flare
     pR(p.xy, (txnoise(p * 4. + n * 2.) - 0.5) * 1. * stuckness * orbInCell); // flare
-    p *= (0.6 + smoothstep(0., 0.6, mod(wn - 0.55, 1.)) * 0.4) * orbInCell + orbNotInCell;
+    p *= (0.6 + smoothstep(0., 0.6, mod(wn - 0.58, 1.)) * 0.4) * orbInCell + orbNotInCell; // pump
     // p *= (0.7 + smoothstep(0., 0.4, mod(n - 0.1, 3.9)) * 0.35) * orbInCell + orbNotInCell;
     pR(p.yz, (p.x * 1. + n) * PI * 0.5); // x axis spiral
     // pR(p.xy, 0.5 * PI * n); // rot
