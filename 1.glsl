@@ -80,20 +80,21 @@ vec3 scene(vec3 p)
     n += 53.1;
     // n *= 0.2;
 
-
-    float wn = n * 0.2;
-    float warpnessX = -0.25 + smoothstep(0.0, 0.6, mod(wn, 4.)) * 0.5 - smoothstep(2.0, 2.6, mod(wn, 4.)) * 0.5;
-    float warpnessY = -0.25 + smoothstep(1.0, 1.6, mod(wn, 4.)) * 0.5 - smoothstep(3.0, 3.6, mod(wn, 4.)) * 0.5;
+    // point movement calc
+    float wn = n / 4. + 0.3;
+    float warpnessX = -0.25 + smoothstep(0.2, 0.6, mod(wn, 4.)) * 0.5 - smoothstep(2.2, 2.6, mod(wn, 4.)) * 0.5;
+    float warpnessY = -0.25 + smoothstep(1.2, 1.6, mod(wn, 4.)) * 0.5 - smoothstep(3.2, 3.6, mod(wn, 4.)) * 0.5;
     float stuckness = (abs(warpnessX) + abs(warpnessY));
     stuckness = smoothstep(0.42, 0.5, stuckness) + 0.05;
 
 
-    // p *= 1. + sin((n) / 2.) * 0.2; // slow zoom in<->out
-    // p *= 1. + tan((n * PI + 0.95) / 4.) * 0.2; // warp in<->out
-    // pR(p.xy, p.z * 1. + n * 0.05); // spin
-    // pR(p.zx, txnoise(p * 2. + n)); // flare
-    pR(p.xy, (txnoise(p * 4. + n) - 0.5) * 0.05 * stuckness); // flare
-    // pR(p.yz, (p.x * 18. + n * 1.) * 0.1); // x axis spiral
+    // // global modifiers
+    // // p *= 1. + sin((n) / 2.) * 0.2; // slow zoom in<->out
+    // // p *= 1. + tan((n * PI + 0.95) / 4.) * 0.2; // warp in<->out
+    // // pR(p.xy, p.z * 1. + n * 0.05); // spin
+    // // pR(p.zx, txnoise(p * 2. + n)); // flare
+    // pR(p.xy, (txnoise(p * 4. + n) - 0.5) * 0.15 * stuckness); // flare
+    // // pR(p.yz, (p.x * 18. + n * 1.) * 0.1); // x axis spiral
 
 
     vec3 gp = p;
@@ -106,17 +107,27 @@ vec3 scene(vec3 p)
 
 
 
-
+    // repeat
     vec3 cell = floor(p);
     p.xy += 0.25;
+    // p.z += 0.1;
     p *= 2.;
     p = fract(p + 0.5) - 0.5;
     p /= 2.;
     pR(p.xy, -0.5 * (1. - abs(cell.y * 3. - cell.x)) * PI);
+    // pR(p.xy, -0.5 * (cell.x - cell.y) * PI);
+
+    float orbXPos = step(0., warpnessX);
+    float orbYPos = step(0., warpnessY);
+    float orbInCell = abs((1. - abs(orbYPos - cell.y)) * (1. - abs(orbXPos - cell.x)));
+    orbInCell = clamp(orbInCell, 0., 1.);
+    float orbNotInCell = 1. - orbInCell;
+    // pR(p.xy, orbInCell);
+    // p.z += orbInCell;
 
 
-    // pR(p.zx, n * 0.1); // rot
-    // pR(p.xy, n * 0.1); // rot
+    // pR(p.zx, (n + abs(cell.y * 3. - cell.x) + 3.) * 0.5); // rot
+    // pR(p.xy, 0.5 * PI * n); // rot
    
     // p /= max(0.8, (1.-fract(n))) + 0.2; // pump
     
@@ -126,12 +137,15 @@ vec3 scene(vec3 p)
     // p /= 2.;
    
     // p *= smoothstep(0., 0.5, n); // initial warp in
-    // p *= 1. + sin((n * PI + 0.95) / 4.) * 0.2; // slow zoom in<->out
+    p *= 1. + sin((n * PI + 0.95) / 4.) * 0.1; // slow zoom in<->out
     // p *= 1. + tan((n * PI + 0.95) / 4.) * 0.2; // warp in<->out
     // pR(p.xy, p.z * 2. + n); // spin
     // pR(p.zx, txnoise(p * 2. + n)); // flare
     // pR(p.xy, txnoise(p * 4. + n) - 0.5); // flare
-    // pR(p.yz, (p.x * 4. + n * 1.) * 1.5); // x axis spiral
+    pR(p.xy, (txnoise(p * 4. + n * 2.) - 0.5) * 1. * stuckness * orbInCell); // flare
+    // p = (p / max(0.8, (1.-fract(n))) + 0.2); // pump
+    p *= (0.7 + smoothstep(0., 0.4, mod(n - 0.1, 4.)) * 0.3) * orbInCell + orbNotInCell;
+    pR(p.yz, (p.x * 1. + n * 1.) * PI * 0.5); // x axis spiral
     // pR(p.xy, n); // rot
     // p.x /= 5.; // long x
     
@@ -143,27 +157,29 @@ vec3 scene(vec3 p)
 
     float innerCube = cube(p, 0.048);
     float outerCube = cube(p, 0.05);
-    outerCube = max(0., outerCube - pipe);
     float cube = outerCube - innerCube;
 
     vec3 p2 = gp;
     // p2.x += smoothstep(0., 1., abs(sin(n)));
     // float warpnessX = smoothstep2(0., 1., mod(n * 0.5 * step(1., n), 2.) -  mod((n + 2.) * 0.5, 2.)) * 0.25;
 
+
+    // point movement
     p2.x += warpnessX;
     p2.y += warpnessY;
-    p2.x += sin(wn * 100.) * stuckness * 0.05;
-    p2.y += sin(wn * 100.) * stuckness * 0.05;
+    p2.x += sin(wn * 80.) * stuckness * 0.05;
+    p2.y += sin(wn * 80.) * stuckness * 0.05;
+
 
     // float warpness = tan(n * 0.5) * 0.03;
     // p2.y += warpness;
     // p2.x -= cos(n * 10.) * 0.05 * smoothstep(0.45, 0.5, 1. - abs(stuckness));
-    float point = point(p2, 0.006, 0.15);
+    float point = point(p2, 0.006, 0.13);
     
+    pipe = max(0., pipe - innerCube * 0.1 - step(0.12, length(p)));
+    // pipe = 0.;
 
-    pipe = max(0., pipe - point - innerCube * 0.1);
     cube = max(0., cube - pipe);
-    
 
     vec3 glow = vec3(0.0);
     glow += cube * purple * 1.8;
@@ -204,10 +220,10 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 	c = mix(c, c.yyy, 0.12); // desaturate
 	c = 0.06 + (c * 0.9);
     
-    c -= smoothstep(0.55, 1.3, abs(uv.x)) * 0.2; // vignette x
-    c -= smoothstep(0.17, 0.7, abs(uv.y)) * 0.2; // vignette y
-    c -= step(0.515, abs(uv.x)); // letterbox x
-    c -= step(0.35, abs(uv.y)); // letterbox y
+    // c -= smoothstep(0.55, 1.3, abs(uv.x)) * 0.2; // vignette x
+    // c -= smoothstep(0.17, 0.7, abs(uv.y)) * 0.2; // vignette y
+    // c -= step(0.515, abs(uv.x)); // letterbox x
+    // c -= step(0.35, abs(uv.y)); // letterbox y
     c = clamp(c, 0., 1.);
     c = max(c, txnoise(vec3(uv.xy, 0.) * 700.) * 0.02 + 0.005); // texturize black
     c += txnoise(vec3(uv.xy, sin(cos(iTime) * 1000.)) * 1000.) * 0.04; // noise
