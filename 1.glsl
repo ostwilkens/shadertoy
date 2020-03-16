@@ -69,6 +69,7 @@ void worldR(inout vec3 p, float op) {
     // pR(p.yx, 1.0 * op);
     pR(p.zx, sin(n * 0.25) * 0.3 * op); // rot
     pR(p.zy, cos(n * 0.25) * 0.2 * op); // rot
+
 }
 
 vec3 scene(vec3 p)
@@ -77,7 +78,7 @@ vec3 scene(vec3 p)
     worldR(p, 1.);
     p.xy *= 1. + length(p.xy) * 0.2; // barrel distort
     p /= 0.35; // zoom out
-    // p.xy /= 0.3;
+    // p.xy /= 0.2;
 
 
     // n = mod(n, 4.); // loop dur
@@ -103,9 +104,9 @@ vec3 scene(vec3 p)
     // pR(p.xy, (txnoise(p * 4. + n) - 0.5) * 0.15 * stuckness); // flare
     // pR(p.yz, (p.x * 18. + n * 1.) * 0.1); // x axis spiral
     p *= (0.95 + smoothstep(0., 0.2, mod(n - 0.43, 1.)) * 0.05); // pump
-    float recoil = (0.9 + smoothstep(0., 0.7, mod(n - 0.2, 4.)) * 0.1);
+    float recoil = (0.9 + smoothstep(0., 0.9, mod(n - 0.2, 4.)) * 0.1);
     p *= recoil; // pump
-    pR(p.xy, -n * 0.2 + recoil * 2.); // spin
+    pR(p.xy, -n * 0.2 - recoil * 1.); // spin
 
     // p.xy -= vec2(warpnessX, warpnessY) * 1.; // follow cam
     
@@ -193,7 +194,7 @@ vec3 scene(vec3 p)
 
     vec3 glow = vec3(0.0);
     glow += cube * purple * 1.4;
-    glow += pipe * purple * 6.;
+    // glow += pipe * purple * 6.;
     glow += point * purple.grb;
 
     vec3 c = glow;
