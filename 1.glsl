@@ -46,7 +46,7 @@ float lightField(float distanceField) {
 
 float cube(vec3 p, float r) {
     vec3 field = clamp(p, -r, r);
-    float cube = (1. / length(p - field)) * 0.0015;
+    float cube = (1. / length(p - field)) * 0.0017;
     return min(1., cube) * 0.2;
 }
 
@@ -66,7 +66,7 @@ float smoothstep2(float a, float b, float v) {
 
 void worldR(inout vec3 p, float op) {
     float n = iTime / BEAT;
-    pR(p.yx, 1.0 * op);
+    // pR(p.yx, 1.0 * op);
     pR(p.zx, sin(n * 0.25) * 0.3 * op); // rot
     pR(p.zy, cos(n * 0.25) * 0.2 * op); // rot
 }
@@ -105,7 +105,7 @@ vec3 scene(vec3 p)
     p *= (0.95 + smoothstep(0., 0.2, mod(n - 0.43, 1.)) * 0.05); // pump
     float recoil = (0.9 + smoothstep(0., 0.7, mod(n - 0.2, 4.)) * 0.1);
     p *= recoil; // pump
-    pR(p.xy, n * 0.2 - recoil * 2.); // spin
+    pR(p.xy, -n * 0.2 + recoil * 2.); // spin
 
     // p.xy -= vec2(warpnessX, warpnessY) * 1.; // follow cam
     
@@ -243,7 +243,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 	// grading
     c = clamp(c, 0.02, 1.);
 	c -= 0.02;
-	c *= 1.1;
+	c *= 1.2;
 	c = sqrt(c);
 	c = c*c*(2.5-1.5*c*c); // contrast
 	c = pow(c, vec3(1.0,0.96,1.0)); // soft green
@@ -257,7 +257,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     c -= step(0.515, abs(uv.x)); // letterbox x
     c -= step(0.35, abs(uv.y)); // letterbox y
     c = clamp(c, 0., 1.);
-    c = max(c, txnoise(vec3(uv.xy, 0.) * 700.) * 0.025 + 0.01); // texturize blacdist
+    c = max(c, txnoise(vec3(uv.xy, 0.) * 700.) * 0.025 + 0.01); // texturize black
     c += txnoise(vec3(uv.xy, sin(cos(iTime) * 1000.)) * 1000.) * 0.04; // noise
    
     fragColor = vec4(c, 1.);
