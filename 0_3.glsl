@@ -5,6 +5,7 @@
 #define PRECISION 1000.
 #define MAX_ITERATIONS 150
 #define MAX_DIST 10.
+#define EPSILON (1. / PRECISION + 0.0001)
 const vec3 purple = normalize(vec3(0.298, 0.176, 0.459));
 
 float txnoise(in vec3 x)
@@ -63,7 +64,7 @@ vec4 scene(vec3 p)
 
     pR(p.yx,  n);
     p.z += tan(n * 2.) * 0.1;
-    add(d, c, max(-fBox(p, vec3(0.2, 0.2, 0.2)), fBox(p, vec3(0.2, 0.2, 0.02))), purple.grb, 3., 0.4);
+    // add(d, c, max(-fBox(p, vec3(0.2, 0.2, 0.2)), fBox(p, vec3(0.2, 0.2, 0.02))), purple.grb, 3., 0.4);
 
     // p.x -= 0.15;
     // add(d, c, fBox(p, vec3(0.1)), purple, 9., 1.);
@@ -74,6 +75,36 @@ vec4 scene(vec3 p)
 
 
     return vec4(c, d);
+}
+
+vec3 nor(in vec3 p)
+{
+    vec2 e = vec2(-EPSILON, EPSILON);   
+    float t1 = scene(p + e.yxx).w, t2 = scene(p + e.xxy).w;
+    float t3 = scene(p + e.xyx).w, t4 = scene(p + e.yyy).w;
+
+    return vec3(normalize(e.yxx*t1 + e.xxy*t2 + e.xyx*t3 + e.yyy*t4));
+}
+
+vec3 marchReflection(vec3 pos, vec3 rayDir)
+{
+    vec3 c = vec3(0.);
+    vec3 normal = nor(pos);
+    rayDir = reflect(rayDir, normal);
+    
+    for(int i = 0; i < MAX_ITERATIONS; i++)
+    {
+        vec4 s = scene(pos);
+        float d = max(s.w, (1. + (0.1 * pos.z)) / (PRECISION * 1.));
+        
+        pos += rayDir * d;
+        c += s.rgb / PRECISION;
+        
+        if(d > MAX_DIST)
+            break;
+    }
+
+    return c;
 }
 
 vec3 march(vec2 uv)
@@ -89,6 +120,8 @@ vec3 march(vec2 uv)
     vec3 c = vec3(0.);
     vec3 pos = origin;
 
+    float reflected = 0.;
+
     for(int i = 0; i < MAX_ITERATIONS; i++)
     {
         vec4 s = scene(pos);
@@ -96,6 +129,17 @@ vec3 march(vec2 uv)
 
         pos += rayDir * d;
         c += s.rgb / (20. + PRECISION);
+
+        // if(pos.z > 0.5)
+        if(reflected == 0. && d < EPSILON)
+        {
+            reflected += 1.;
+
+            c += marchReflection(pos, rayDir);
+
+            // rayDir = reflect(rayDir, normalize(rayDir));
+            // c = vec3(1.);
+        }
 
         if(d > MAX_DIST)
             break;
