@@ -4,6 +4,7 @@
 #define MAX_ITERATIONS 200
 #define MAX_DIST 10.
 #define EPSILON (1. / PRECISION + 0.0001)
+#define time (iTime * (135. / 60.) / 4.)
 const vec3 purple = normalize(vec3(0.298, 0.176, 0.459));
 
 // https://thebookofshaders.com/11/
@@ -72,13 +73,13 @@ void sub(inout float d, inout vec3 c, float d2, vec3 color, float density, float
 
 vec4 scene(vec3 p)
 {
-    float n = iTime * 1.+ 4.;
+    float n = time * 1. + 4.;
     float d = 1. / 0.;
     vec3 c = vec3(0.);
 
-    p.z -= 1.;
+    p.z -= 0.5;
 
-    pR(p.yz, 2.);
+    pR(p.yz, 2.1);
     pR(p.xy, PI/2. + sin(n) * 1.5);
     add(d, c, max(-fDodecahedron(p, 0.15), fDodecahedron(p, 0.15)), purple, 3., 20.);
     pR(p.yx,  n);
@@ -122,7 +123,7 @@ vec3 march(vec3 pos, vec3 rayDir)
                 float d = max(s.w, (1. + (0.1 * pos.z)) / PRECISION);
                 
                 pos += rayDir * d;
-                c += (s.rgb / PRECISION) * 0.5;
+                c += (s.rgb / PRECISION) * 0.3;
 
                 if(d > MAX_DIST)
                     break;

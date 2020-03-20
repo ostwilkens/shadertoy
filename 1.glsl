@@ -4,7 +4,7 @@
 #define MAX_ITERATIONS 200
 #define MAX_DIST 10.
 #define EPSILON (1. / PRECISION + 0.0001)
-#define time (iTime * (135. / 60.) / 4.)
+#define time (iTime * (145. / 60.) / 2.)
 const vec3 purple = normalize(vec3(0.298, 0.176, 0.459));
 
 // https://thebookofshaders.com/11/
@@ -71,24 +71,82 @@ void sub(inout float d, inout vec3 c, float d2, vec3 color, float density, float
     c -= lightness(d2, density, sharpness) * color;
 }
 
-vec4 scene(vec3 p)
+float shell(float d)
 {
-    float n = time * 1. + 4.;
-    float d = 1. / 0.;
-    vec3 c = vec3(0.);
+    return max(-d, d);
+}
 
-    // n += 
+void scene1(vec3 p, float n, inout vec3 c, inout float d)
+{
+    int sidesA = int(mod(floor(n), 8.));
+    int sidesB = int(mod(floor(n - 1.), 8.));
 
+    float weight = mod(n, 1.);
+    weight = smoothstep(0., 0.3, weight);
+
+    float funky = weight + floor(n);
+    pR(p.zy, 0.2);
+    pR(p.zx, n * 0.5);
+    pR(p.zx, funky * PI * 0.5);
+
+    float shapeA = fGDF(p, 0.15, sidesA, sidesA + 5);
+    float shapeB = fGDF(p, 0.15, sidesB, sidesB + 5);
+    float shapeC = shapeA * weight + shapeB * (1. - weight);
+    add(d, c, shell(shapeC), purple, 1., 10.);
+}
+
+void scene2(vec3 p, float n, inout vec3 c, inout float d)
+{
     p.z -= 0.5;
-
     pR(p.yz, 2.1);
     pR(p.xy, PI/2. + sin(n) * 1.5);
     add(d, c, max(-fDodecahedron(p, 0.15), fDodecahedron(p, 0.15)), purple, 3., 20.);
     pR(p.yx,  n);
-    p.z += tan(n * 2.) * 0.1;
+    p.z += tan(n * PI) * 0.1;
     add(d, c, max(-fBox(p, vec3(0.2, 0.2, 0.2)), fBox(p, vec3(0.2, 0.2, 0.04))), purple.grb, 2., 0.4);
+}
 
+vec4 scene(vec3 p)
+{
+    float n = time;
+    vec3 c = vec3(0.);
+    float d = 1. / 0.;
+
+    n = mod(n, 2.);
+
+    scene1(p, n, c, d);
+    
     return vec4(c, d);
+}
+
+vec3 origin1()
+{
+    return vec3(0., 0., -1.5 + sin(time) * 0.1);
+}
+
+vec3 origin()
+{
+    return origin1();
+    return vec3(0., 0., -1.5);
+}
+
+vec3 target1()
+{
+    // float rumbleX = noise(vec2(time * 10., 0.));
+    // float rumbleY = noise(vec2(time * 10. + 100., 0.));
+    // vec3 rumble = vec3(rumbleX, rumbleY, 0.);
+
+    // float yoinkN = time * 2. + 0.7;
+    // float yoinkX = sin(yoinkN * 70.);
+    // vec3 yoink = vec3(yoinkX, 0., 0.) * max(0., (0.5 - fract(yoinkN)));
+    
+    return vec3(0., 0., 1.);
+}
+
+vec3 target()
+{
+    return target1();
+    return vec3(0., 0., 1.);
 }
 
 vec3 normalAt(in vec3 p)
@@ -143,10 +201,9 @@ vec3 march(vec3 pos, vec3 rayDir)
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     vec2 uv = (fragCoord.xy - (iResolution.xy * 0.5)) / iResolution.yy;
-    vec3 origin = vec3(0., 0., -2.);
-    vec3 cameraTarget = origin + vec3(0., 0., 1.);
+    vec3 origin = origin();
     vec3 upDirection = vec3(0., 1.0, 0.);
-    vec3 cameraDir = normalize(cameraTarget - origin);
+    vec3 cameraDir = normalize(target() - origin);
     vec3 cameraRight = normalize(cross(upDirection, origin));
 	vec3 cameraUp = cross(cameraDir, cameraRight);
     vec3 rayDir = normalize(cameraRight * uv.x + cameraUp * uv.y + cameraDir);
