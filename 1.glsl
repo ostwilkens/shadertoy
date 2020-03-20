@@ -76,24 +76,41 @@ float shell(float d)
     return max(-d, d);
 }
 
-void scene1(vec3 p, float n, inout vec3 c, inout float d)
-{
-    int sidesA = int(mod(floor(n), 8.));
-    int sidesB = int(mod(floor(n - 1.), 8.));
+// float dFragment(vec3 p, float n)
+// {
+//     int sidesA = int(mod(floor(n), 8.));
+//     int sidesB = int(mod(floor(n - 1.), 8.));
 
-    float weight = mod(n, 1.);
-    weight = smoothstep(0., 0.3, weight);
+//     float weight = smoothstep(0., 0.3, mod(n, 1.));
 
-    float funky = weight + floor(n);
-    pR(p.zy, 0.2);
-    pR(p.zx, n * 0.5);
-    pR(p.zx, funky * PI * 0.5);
+//     float funky = weight + floor(n);
+//     pR(p.zy, 0.2);
+//     pR(p.zx, n * 0.5);
+//     pR(p.zx, funky * PI * 0.5);
 
-    float shapeA = fGDF(p, 0.15, sidesA, sidesA + 5);
-    float shapeB = fGDF(p, 0.15, sidesB, sidesB + 5);
-    float shapeC = shapeA * weight + shapeB * (1. - weight);
-    add(d, c, shell(shapeC), purple, 1., 10.);
-}
+//     float shapeA = fGDF(p, 0.15, sidesA, sidesA + 5);
+//     float shapeB = fGDF(p, 0.15, sidesB, sidesB + 5);
+//     float shapeC = shapeA * weight + shapeB * (1. - weight);
+
+//     return shapeC;
+// }
+
+// void scene1(vec3 p, float n, inout vec3 c, inout float d)
+// {
+//     float orbSize = clamp(smoothstep(0., 1., n * 0.05), 0., 1.) * 0.1;
+//     float dOrb = fSphere(p, orbSize);
+//     float dFragment = dFragment(p, n);
+
+//     float weightA = smoothstep(16., 16.2, n);
+//     float dMorphA = dFragment * weightA + dOrb * (1. - weightA);
+
+//     float density = 1. + sin(n * PI / 2. - 0.4);
+//     density = mix(density, 2., smoothstep(16.7, 16.9, n));
+
+//     float sharpness = mix(1., 20., smoothstep(8., 12., n));
+
+//     add(d, c, shell(dMorphA), purple, density, sharpness);
+// }
 
 void scene2(vec3 p, float n, inout vec3 c, inout float d)
 {
@@ -106,28 +123,55 @@ void scene2(vec3 p, float n, inout vec3 c, inout float d)
     add(d, c, max(-fBox(p, vec3(0.2, 0.2, 0.2)), fBox(p, vec3(0.2, 0.2, 0.04))), purple.grb, 2., 0.4);
 }
 
+void scene3(vec3 p, float n, inout vec3 c, inout float d)
+{
+    int sidesA = int(mod(floor(n), 8.));
+    int sidesB = int(mod(floor(n - 1.), 8.));
+
+    float weight = smoothstep(0., 0.3, mod(n, 1.));
+
+    float funky = weight + floor(n);
+    pR(p.zy, -0.2);
+    pR(p.zx, n * 0.5);
+    pR(p.zx, funky * PI * 0.5);
+
+    float shapeA = fGDF(p, 0.15, sidesA, sidesA + 5);
+    float shapeB = fGDF(p, 0.15, sidesB, sidesB + 5);
+    float shapeC = shapeA * weight + shapeB * (1. - weight);
+
+    float expansion = sin(-n * 0.5) * 0.08 + 0.25;
+    float shapeD = fGDF(p, 0.15 + expansion, sidesA, sidesA + 5);
+    float shapeE = fGDF(p, 0.15 + expansion, sidesB, sidesB + 5);
+    float shapeF = shapeD * weight + shapeE * (1. - weight);
+    shapeF = shell(shapeF);
+    float shapeG = fBox2Cheap(p.yx + tan(-n * PI + 1.9) * 0.05 - 0.05, vec2(0.01 + expansion * 0.05, 1.));
+    float shapeH = max(shapeF, shapeG);
+    
+    add(d, c, shell(shapeC), purple, 4., 20.);
+    add(d, c, shapeH, purple.grb, 4., 4.);
+}
+
 vec4 scene(vec3 p)
 {
     float n = time;
     vec3 c = vec3(0.);
     float d = 1. / 0.;
 
-    n = mod(n, 2.);
-
-    scene1(p, n, c, d);
+    // n = mod(n + 14.0, 20.);
+    scene3(p, n, c, d);
     
     return vec4(c, d);
 }
 
 vec3 origin1()
 {
-    return vec3(0., 0., -1.5 + sin(time) * 0.1);
+    return vec3(0., 0., -1.7 + sin(time) * 0.1);
 }
 
 vec3 origin()
 {
     return origin1();
-    return vec3(0., 0., -1.5);
+    return vec3(0., 0., -1.);
 }
 
 vec3 target1()
