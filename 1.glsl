@@ -179,6 +179,27 @@ float s4exp(float off, float n)
         0.2 / (10. + mod(n, 1.) * 40.);
 }
 
+void pumpcube(vec3 p, inout float d, inout vec3 c, float n, float s) 
+{
+    add(d, c, fBoxCheap(p + vec3(0., 0., s + s4exp(1., n)), vec3(s, s, 0.)), purple, 4., 20.);
+    // p.y += tan(n) * 0.02;
+    // pR(p.yz, n);
+    add(d, c, fBoxCheap(p - vec3(0., 0., s + s4exp(2., n)), vec3(s, s, 0.)), purple, 4., 20.);
+    // p.z += tan(n) * 0.02;
+    // pR(p.zx, n);
+    add(d, c, fBoxCheap(p + vec3(0., s + s4exp(3., n), 0.), vec3(s, 0., s)), purple, 4., 20.);
+    // p.x += tan(n) * 0.02;
+    // pR(p.xz, n);
+    add(d, c, fBoxCheap(p - vec3(0., s + s4exp(4., n), 0.), vec3(s, 0., s)), purple, 4., 20.);
+    // p.y += tan(n) * 0.02;
+    // pR(p.yx, n);
+    add(d, c, fBoxCheap(p + vec3(s + s4exp(5., n), 0., 0.), vec3(0., s, s)), purple, 4., 20.);
+    // p.z += tan(n) * 0.02;
+    // pR(p.zy, n);
+    add(d, c, fBoxCheap(p - vec3(s + s4exp(5.5, n), 0., 0.), vec3(0., s, s)), purple, 4., 20.);
+
+}
+
 void scene4(vec3 p, float n, inout vec3 c, inout float d)
 {
     pR(p.zy, -0.2);
@@ -186,22 +207,11 @@ void scene4(vec3 p, float n, inout vec3 c, inout float d)
 
     // p.x += tan(n) * 0.02;
     // pR(p.xy, n);
-    add(d, c, fBoxCheap(p + vec3(0., 0., 0.1 + s4exp(1., n)), vec3(0.1, 0.1, 0.)), purple, 4., 20.);
-    // p.y += tan(n) * 0.02;
-    // pR(p.yz, n);
-    add(d, c, fBoxCheap(p - vec3(0., 0., 0.1 + s4exp(2., n)), vec3(0.1, 0.1, 0.)), purple, 4., 20.);
-    // p.z += tan(n) * 0.02;
-    // pR(p.zx, n);
-    add(d, c, fBoxCheap(p + vec3(0., 0.1 + s4exp(3., n), 0.), vec3(0.1, 0., 0.1)), purple, 4., 20.);
-    // p.x += tan(n) * 0.02;
-    // pR(p.xz, n);
-    add(d, c, fBoxCheap(p - vec3(0., 0.1 + s4exp(4., n), 0.), vec3(0.1, 0., 0.1)), purple, 4., 20.);
-    // p.y += tan(n) * 0.02;
-    // pR(p.yx, n);
-    add(d, c, fBoxCheap(p + vec3(0.1 + s4exp(5., n), 0., 0.), vec3(0., 0.1, 0.1)), purple, 4., 20.);
-    // p.z += tan(n) * 0.02;
-    // pR(p.zy, n);
-    add(d, c, fBoxCheap(p - vec3(0.1 + s4exp(5.5, n), 0., 0.), vec3(0., 0.1, 0.1)), purple, 4., 20.);
+
+    pumpcube(p, d, c, n * 0.25, 0.1);
+    // pR(p.zx, -n * 1.0);
+
+    pumpcube(p, d, c, n * 0.25 + 0.25, 0.2 + sin(n * PI / 8.0) * 0.09);
 }
 
 void scene5(vec3 p, float n, inout vec3 c, inout float d)
@@ -274,7 +284,7 @@ void scene8(vec3 p, float n, inout vec3 c, inout float d) {
     n *= 1.;
     n = mod(n, 122.);
     // n += 25.;
-    n = 55.;
+    // n = 55.;
 
     pR(p.yz, 0.2);
     p.y -= 0.3;
@@ -304,11 +314,173 @@ float point(vec3 p, float r, float s) {
     return min(1., (1. / length(p)) * r) * s;
 }
 
+void scene9(vec3 p, float n, inout vec3 c, inout float d)
+{
+    n *= 1.;
+    n = mod(n, 10.);
+
+    vec3 p1 = p;
+
+    p1 += sin(p1.y * 10.0 + n) * 0.5;
+
+    float sun = fSphere(p1, 0.2);
+
+    add(d, c, sun, purple.brg, 25., 0.05);
+}
+
+void scene10(vec3 p, float n, inout vec3 c, inout float d)
+{
+    // n *= 8.;
+    n = mod(n, 30.);
+
+    // n += 10.0;
+    // n += 80.0;
+
+    // n += 30.0;
+    // n = 125.0;
+
+    // float accel = max(0.0, n - 120.0);
+    // float accel = smoothstep(117.0, 130.0, n);
+
+    vec3 p1 = p;
+    vec3 p2 = p;
+
+    p1.x += sin(n * 0.25 - 1.0);
+    p1.y += cos(n * 0.2);
+    float sun = fSphere(p1, 0.2);
+    // add(d, c, sun, purple.brg, 25., 0.05);
+    // p1 += sin(p1.y * 10.0 + n) * 0.5;
+
+    p2.y -= 0.2;
+    pR(p2.yz, -0.5);
+    pR(p2.xz, sin(n * 0.5) * 0.1);
+    // p2.z += accel * 1.0 *;
+    // p2.y -= accel * 1.0;
+    // p2.y += 1.0 + accel;
+    // pR(p2.yz, -0.5 - n * 0.041);
+    pR(p2.xy, 0.9 + n * 0.02);
+    pR(p2.yz, 0.5 + n * 0.0797);
+    p.z += n;
+    p2.xy *= 2.0;
+    // p2.z += sin(p.y - 1.0) * 0.5;
+
+    vec2 cell = pMod2(p2.xy, vec2(0.5));
+
+    p2.z += (rand(cell.xy) - 0.5) * 0.5;
+
+    float star = fSphere(p2, 0.005 + sin(cell.y) * 0.04);
+    add(d, c, star, purple, 20.0, 0.1);
+}
+
+void scene11(vec3 p, float n, inout vec3 c, inout float d)
+{
+    // n *= 8.;
+    n = mod(n, 30.);
+
+    // n += 10.0;
+    // n += 80.0;
+
+    // n += 30.0;
+    // n = 125.0;
+
+    vec3 p1 = p;
+    vec3 p2 = p;
+
+    // p1.x += sin(n * 0.25 - 1.0);
+    // p1.y += cos(n * 0.2);
+    float sun = fSphere(p1, 0.2);
+    // add(d, c, sun, purple.brg, 25., 0.05);
+    // p1 += sin(p1.y * 10.0 + n) * 0.5;
+
+    // p2.y -= 0.8;
+    // pR(p2.yz, -0.5);
+    // pR(p2.xz, sin(n * 0.5) * 0.1);
+    // p2.z += accel * 1.0 *;
+    // p2.y -= accel * 1.0;
+    // p2.y += 1.0 + accel;
+    // pR(p2.yz, -0.5 - n * 0.041);
+    // pR(p2.xy, 0.9 + n * 0.02);
+    // p.z += n * 10.0;
+    // pR(p2.yz, 0.5 + n * 0.0797);
+    p2.xy += n;
+    p2.xy *= 2.0;
+    pR(p2.xz, sin(n * 0.2) * 0.1);
+    pR(p2.zy, cos(n * 0.2) * 0.1);
+
+    // p2.xy *= 1.25;
+
+    // p2.xy *= sin(n * 0.25) + 2.0;
+    p2.z += sin(p.y - 1.0) * 0.5;
 
 
-// void scene9(vec3 p, float n, inout vec3 c, inout float d) {
-//     add(d, c, glass(point(p, 10.1, 1.)), purple, 40., 1.);
-// }
+    p2.z -= 2.0;
+
+    vec2 cell = pMod2(p2.xy, vec2(0.5));
+    p2.z /= 30.0;
+
+    p2.z += (rand(cell.xy * 0.1) - 0.5) * 1.0;
+
+
+    // float star = fSphere(p2, 0.005 + sin(cell.y) * 0.04);
+    float star = fSphere(p2, 0.01);
+    add(d, c, star, purple, 20.0, 0.1);
+}
+
+
+void scene12(vec3 p, float n, inout vec3 c, inout float d)
+{
+    // n *= 8.;
+    n = mod(n, 70.);
+
+    n = 53.0;
+
+
+    vec3 p1 = p;
+    vec3 p2 = p;
+
+    // p1.x += sin(n * 0.25 - 1.0);
+    // p1.y += cos(n * 0.2);
+    float sun = fSphere(p1, 0.2);
+    // add(d, c, sun, purple.brg, 25., 0.05);
+    // p1 += sin(p1.y * 10.0 + n) * 0.5;
+
+    p2.x -= 18.0;
+    p2.z += pow(n, 1.7) * 0.1;
+
+    // p2.y -= 0.8;
+    pR(p2.yz, -0.5);
+    // pR(p2.xz, sin(n * 0.5) * 0.1);
+
+    
+    pR(p2.yz, -smoothstep(0.0, 30.0, n) * 1.025); // panup++
+    // pR(p2.yz, -1.0); // panup^
+    
+
+    
+    pR(p2.xy, 0.9 + n * 0.01);
+    // p.z += n * 10.0;
+    // pR(p2.yz, 0.5 + n * 0.0797);
+    // p2.xy += n;
+    // p2.xy *= 2.0;
+    // pR(p2.xz, sin(n * 0.2) * 0.1);
+    pR(p2.zy, cos(n * 0.2) * 0.1);
+
+    // p2.xy *= sin(n * 0.25) + 2.0;
+    p2.z += sin(p.y - 1.0) * 0.5;
+
+
+    p2.z -= 2.0;
+
+    vec2 cell = pMod2(p2.xy, vec2(0.5));
+    p2.z /= 3.0;
+
+    // p2.z += (rand(cell.xy * 0.1) - 0.5) * 0.1;
+
+
+    // float star = fSphere(p2, 0.005 + sin(cell.y) * 0.04);
+    float star = fSphere(p2, 0.01);
+    add(d, c, star, purple.grb, 22.0, 0.5);
+}
 
 vec4 scene(vec3 p)
 {
@@ -316,7 +488,7 @@ vec4 scene(vec3 p)
     vec3 c = vec3(0.);
     float d = 1. / 0.;
 
-    scene8(p, n, c, d);
+    scene12(p, n, c, d);
     
     return vec4(c, d);
 }
@@ -400,10 +572,8 @@ vec3 march(vec3 pos, vec3 rayDir)
     return c;
 }
 
-void mainImage(out vec4 fragColor, in vec2 fragCoord)
+vec3 image(vec2 uv, out vec4 fragColor, in vec2 fragCoord)
 {
-    vec2 uv = (fragCoord.xy - (iResolution.xy * 0.5)) / iResolution.yy;
-    uv *= 1.5;
     vec3 origin = origin();
     vec3 upDirection = vec3(0., 1.0, 0.);
     vec3 cameraDir = normalize(target() - origin);
@@ -412,7 +582,38 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec3 rayDir = normalize(cameraRight * uv.x + cameraUp * uv.y + cameraDir);
 
     vec3 c = march(origin, rayDir);
-    pp(c, uv);
+
+    return c;
    
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+    vec2 uv = (fragCoord.xy - (iResolution.xy * 0.5)) / iResolution.yy;
+    uv *= 1.5;
+
+    // fragColor = vec4(1.0);
+    vec3 c = vec3(0.0, 0.0, 0.0);
+
+    c += image(uv, fragColor, fragCoord);
+
+    pp(c, uv);
+
+    if(uv.x < 0.0 && uv.y > 0.4) {
+        c = image((uv * 2.0 + vec2(0.5, -0.9)), fragColor, fragCoord);
+    } else if(uv.x > 0.0 && uv.y > 0.4) {
+        c = image((uv * 2.0 + vec2(-0.5, -0.9)), fragColor, fragCoord);
+    }
+    
+    // else if(uv.x > 0.0 && uv.y < 0.0) {
+    //     c += image(uv * 2.0 + vec2(-0.5, 0.5), fragColor, fragCoord);
+    // } else if(uv.x < 0.0 && uv.y > 0.0) {
+    //     c += image(uv * 2.0 + vec2(0.5, -0.5), fragColor, fragCoord);
+    // } else if(uv.x > 0.0 && uv.y > 0.0) {
+    //     c += image(uv * 2.0 + vec2(-0.5, -0.5), fragColor, fragCoord);
+    // }
+
+    
     fragColor = vec4(c, 1.);
+
 }
