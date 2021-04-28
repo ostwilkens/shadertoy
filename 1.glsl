@@ -432,7 +432,7 @@ void scene12(vec3 p, float n, inout vec3 c, inout float d)
     // n *= 8.;
     n = mod(n, 70.);
 
-    n = 53.0;
+    // n = 53.0;
 
 
     vec3 p1 = p;
@@ -482,13 +482,90 @@ void scene12(vec3 p, float n, inout vec3 c, inout float d)
     add(d, c, star, purple.grb, 22.0, 0.5);
 }
 
-vec4 scene(vec3 p)
+float boxAbs(vec3 p, vec3 size) {
+    return fBox(p + vec3(size.x, size.y, 0.0), size);
+}
+
+void scene13(vec3 p, float n, inout vec3 c, inout float d)
+{
+    n = mod(n, 70.);
+    // n = 0.0;
+
+    // p.xy *= 1.5;
+
+    // p.xy -= 0.5;
+    // p.x -= 0.7;
+    p.y += 0.1;
+    p.y = -p.y;
+
+    vec3 p1 = p;
+    
+    float glow = smoothstep(0.0, 0.9, 1.0 - 1. / n);
+    float glow2 = smoothstep(0.6, 0.96, 1.0 - 1. / n);
+
+
+    pR(p1.zx, noise(p1.xy * 2. + p1.z + n) * (1.0 - glow2));
+    // pR(p1.xy, noise(p1.xz * 4. + n) * (1.0 - glow2));
+    // pR(p1.xy, noise(p1.xz * 4. + n) - 0.5);
+
+
+    pR(p1.xz, sin(n * 0.3) * 0.07);
+    pR(p1.yz, cos(n * 0.42) * 0.05);
+    p1.x -= 0.64;
+
+
+    pR(p1.xz, 1.0 - glow2);
+    p1.z -= 1.0 / (glow2 + 0.001);
+    p1.z += 1.0;
+
+    float maxdepth = 80.0;
+    float depth = glow * maxdepth;
+    p1.z += depth;
+    p1.z -= maxdepth;
+
+
+    pR(p1.xy, p1.z * 0.2);
+    p1.y += sin(p1.z * PI * 0.22) * 0.1;
+    // // add(d, c, fBox2Cheap(p.xy + vec2(0., 0.1), vec2(0., 0.003 + sin(p.z) * 0.004)), purple.grb, 10., 1.);
+    // p1.y += noise(p1.zz * 1.0) * 0.1;
+    // // p.y += txnoise(vec3(p.xz * 8. + n * 1.5, 0.)) * 0.05;
+    p1.x -= noise(p1.xx * 2. + n * 0.2 + 10.) * 0.03;
+    // p.y += noise(p.xz * 0.5 - n * 0.25) * 0.15;
+
+
+
+
+    float a = boxAbs(p1, vec3(0.64, 0.17, maxdepth + .075 - depth + sin(n * 0.2) * 0.047 - n * 0.0018));
+    a = max(-boxAbs(p1 + vec3(0.01, 0.01, 0.0), vec3(0.18, 0.07, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.01, 0.16, 0.0), vec3(0.18, 0.04, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.28, 0.01, 0.0), vec3(0.07, 0.3, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.54, 0.01, 0.0), vec3(0.07, 0.3, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.69, 0.01, 0.0), vec3(0.14, 0.07, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.69, 0.16, 0.0), vec3(0.14, 0.04, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.98, 0.01, 0.0), vec3(0.12, 0.04, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(0.98, 0.25, 0.0), vec3(0.07, 0.1, 1000.0)), a);
+    a = max(-boxAbs(p1 + vec3(1.13, 0.16, 0.0), vec3(0.2, 0.2, 1000.0)), a);
+
+    a -= 0.015;
+
+
+    add(d, c, shell(a), purple, 100. - glow * 80.0, 1.5 - glow2);
+
+}
+
+vec4 scene(vec3 p, float viewId)
 {
     float n = time;
     vec3 c = vec3(0.);
     float d = 1. / 0.;
 
+    n += + viewId * 11.0;
+
     scene12(p, n, c, d);
+
+    if(n > 32.0) {
+        scene13(p, n - 32.0, c, d);
+    }
     
     return vec4(c, d);
 }
@@ -523,21 +600,21 @@ vec3 target()
     return vec3(0., 0., 1.);
 }
 
-vec3 normalAt(in vec3 p)
+vec3 normalAt(in vec3 p, float viewId)
 {
-    float c = scene(p).w;
+    float c = scene(p, viewId).w;
 	vec2 nOfs = vec2(0.001, 0.0);
-	return normalize(vec3(scene(p + nOfs.xyy).w, scene(p + nOfs.yxy).w, scene(p + nOfs.yyx).w) - c);
+	return normalize(vec3(scene(p + nOfs.xyy, viewId).w, scene(p + nOfs.yxy, viewId).w, scene(p + nOfs.yyx, viewId).w) - c);
 }
 
-vec3 march(vec3 pos, vec3 rayDir)
+vec3 march(vec3 pos, vec3 rayDir, float viewId)
 {
     vec3 c = vec3(0.);
     int reflections = 0;
     
     for(int i = 0; i < MAX_ITERATIONS; i++)
     {
-        vec4 s = scene(pos);
+        vec4 s = scene(pos, viewId);
         float d = max(s.w, (1. + (0.1 * pos.z)) / PRECISION);
         
         pos += rayDir * d;
@@ -547,13 +624,13 @@ vec3 march(vec3 pos, vec3 rayDir)
         {
             reflections++;
 
-            vec3 normal = normalAt(pos - rayDir * EPSILON * 2.);
+            vec3 normal = normalAt(pos - rayDir * EPSILON * 2., viewId);
             vec3 rayDir = reflect(rayDir, normal);
             vec3 pos = pos;
 
             for(int i = 0; i < MAX_ITERATIONS; i++)
             {
-                vec4 s = scene(pos);
+                vec4 s = scene(pos, viewId);
                 float d = max(s.w, (1. + (0.1 * pos.z)) / PRECISION);
                 
                 pos += rayDir * d;
@@ -572,7 +649,7 @@ vec3 march(vec3 pos, vec3 rayDir)
     return c;
 }
 
-vec3 image(vec2 uv, out vec4 fragColor, in vec2 fragCoord)
+vec3 image(vec2 uv, out vec4 fragColor, in vec2 fragCoord, float id)
 {
     vec3 origin = origin();
     vec3 upDirection = vec3(0., 1.0, 0.);
@@ -581,7 +658,7 @@ vec3 image(vec2 uv, out vec4 fragColor, in vec2 fragCoord)
 	vec3 cameraUp = cross(cameraDir, cameraRight);
     vec3 rayDir = normalize(cameraRight * uv.x + cameraUp * uv.y + cameraDir);
 
-    vec3 c = march(origin, rayDir);
+    vec3 c = march(origin, rayDir, id);
 
     return c;
    
@@ -595,22 +672,19 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     // fragColor = vec4(1.0);
     vec3 c = vec3(0.0, 0.0, 0.0);
 
-    c += image(uv, fragColor, fragCoord);
+    c += image(uv, fragColor, fragCoord, 0.0);
 
     pp(c, uv);
 
-    if(uv.x < 0.0 && uv.y > 0.4) {
-        c = image((uv * 2.0 + vec2(0.5, -0.9)), fragColor, fragCoord);
-    } else if(uv.x > 0.0 && uv.y > 0.4) {
-        c = image((uv * 2.0 + vec2(-0.5, -0.9)), fragColor, fragCoord);
-    }
-    
-    // else if(uv.x > 0.0 && uv.y < 0.0) {
-    //     c += image(uv * 2.0 + vec2(-0.5, 0.5), fragColor, fragCoord);
-    // } else if(uv.x < 0.0 && uv.y > 0.0) {
-    //     c += image(uv * 2.0 + vec2(0.5, -0.5), fragColor, fragCoord);
-    // } else if(uv.x > 0.0 && uv.y > 0.0) {
-    //     c += image(uv * 2.0 + vec2(-0.5, -0.5), fragColor, fragCoord);
+    float h = 1.15;
+    // if(uv.x < 0.0 && uv.y > 0.4) {
+    //     c = image((uv * 2.0 + vec2(0.5, -h)), fragColor, fragCoord, 1.0);
+    // } else if(uv.x > 0.0 && uv.y > 0.4) {
+    //     c = image((uv * 2.0 + vec2(-0.5, -h)), fragColor, fragCoord, 2.0);
+    // } else if(uv.x < 0.0 && uv.y < -0.4) {
+    //     c = image((uv * 2.0 + vec2(0.5, h)), fragColor, fragCoord, 3.0);
+    // } else if(uv.x > 0.0 && uv.y < -0.4) {
+    //     c = image((uv * 2.0 + vec2(-0.5, h)), fragColor, fragCoord, 4.0);
     // }
 
     
