@@ -133,6 +133,11 @@ float shell(float d)
 void scene2(vec3 p, float n, inout vec3 c, inout float d)
 {
     n *= 0.5;
+
+
+    pR(p.xz, -0.4);
+    pR(p.xy, PI / 2.0);
+
     p.z -= 0.5;
     pR(p.yz, 2.1);
     pR(p.xy, PI/2. + sin(n) * 1.5);
@@ -140,6 +145,28 @@ void scene2(vec3 p, float n, inout vec3 c, inout float d)
     pR(p.yx,  n);
     p.z += tan(n * PI) * 0.1;
     add(d, c, max(-fBox(p, vec3(0.2, 0.2, 0.2)), fBox(p, vec3(0.2, 0.2, 0.04))), purple.grb, 5., 0.4);
+}
+
+void scene2b(vec3 p, float n, inout vec3 c, inout float d)
+{
+    n *= 0.5;
+
+    vec3 p1 = p;
+
+    pR(p1.xz, -0.4);
+    pR(p1.xy, PI / 2.0);
+
+    p1.z -= 0.5;
+    pR(p1.yz, 2.1);
+    pR(p1.xy, PI/2. + sin(n) * 1.5);
+    
+    pR(p1.yx,  n);
+
+    add(d, c, max(-fBox(p1, vec3(0.2, 0.2, 0.2)), fBox(p1, vec3(0.2, 0.2, 0.04))), purple.grb, 5., 0.4);
+
+    p1.z += tan(n * PI) * 0.1;
+    
+    add(d, c, max(-fDodecahedron(p1, 0.15), fDodecahedron(p1, 0.15)), purple, 5., 10.);
 }
 
 void scene3(vec3 p, float n, inout vec3 c, inout float d)
@@ -553,6 +580,55 @@ void scene13(vec3 p, float n, inout vec3 c, inout float d)
 
 }
 
+
+void backdrop1(vec3 p, float n, inout vec3 c, inout float d)
+{
+    n = mod(n, 70.);
+
+    vec3 p1 = p;
+
+    pR(p1.zy, 0.7);
+
+    float a = fBox(p1, vec3(0.5, 0.3, 0.001));
+
+    add(d, c, (a), purple.grb, 25., 0.1);
+}
+
+void backdrop2(vec3 p, float n, inout vec3 c, inout float d)
+{
+    n = mod(n, 70.);
+
+    vec3 p1 = p;
+
+    p1.z += 1.0;
+
+    // pR(p1.xz, PI / 2.0);
+
+
+
+    // p1.y = abs(p1.y);
+
+    // p1 = vec3(abs(p1.x), p1.y, p1.z);
+    // p1.x -= 0.5;
+    // pR(p1.zy, 0.0);
+    // pR(p1.xz, sin(n));
+
+    // float a = fBox(p1, vec3(0.5, 0.3, 0.001));
+    // pR(p1.zx, PI / 4.0 * 1.0);
+    // a = min(a, fBox(p1, vec3(0.5, 0.3, 0.001)));
+    // pR(p1.zx, PI / 4.0 * 2.0);
+    // a = min(a, fBox(p1, vec3(0.5, 0.3, 0.001)));
+    // pR(p1.zx, PI / 4.0 * 3.0);
+    // a = min(a, fBox(p1, vec3(0.5, 0.3, 0.001)));
+
+    float a = fHexagonCircumcircle(p1, vec2(1.2, 2.0));
+    a = shell(a);
+    a = max(-fBoxCheap(p1 + vec3(0.0, 0.0, -0.5), vec3(0.5, 2.0, 0.5)), a);
+    
+
+    add(d, c, (a), purple.grb, 5., 0.5);
+}
+
 vec4 scene(vec3 p, float viewId)
 {
     float n = time;
@@ -561,11 +637,19 @@ vec4 scene(vec3 p, float viewId)
 
     n += + viewId * 11.0;
 
-    scene12(p, n, c, d);
+    // vec3 p1 = p;
+    // scene2(p1, n, c, d);
+    // scene2b(p1, n + 1.0, c, d);
 
-    if(n > 32.0) {
-        scene13(p, n - 32.0, c, d);
-    }
+    backdrop2(p, n, c, d);
+    scene3(p, n, c, d);
+
+    // // scene8(p, n, c, d);
+    // scene7(p, n, c, d);
+
+    // // if(n > 8.0) {
+    //     scene13(p + vec3(0.0, 0.25, 0.0), n - 8.0, c, d);
+    // // }
     
     return vec4(c, d);
 }
